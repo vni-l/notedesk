@@ -1,6 +1,6 @@
-# Bloco de Notas
+# Notedesk
 
-Aplicativo desktop local para escrever rascunhos de notas. A interface atual tem uma barra lateral de navegação e uma área de edição com campos para título e conteúdo, além de um contador de palavras e caracteres.
+Aplicativo desktop local para escrever páginas. A interface tem uma lista de páginas salvas na barra lateral e uma área de edição com título, conteúdo e contador de palavras e caracteres.
 
 ## Stack
 
@@ -36,4 +36,8 @@ pnpm tauri build
 
 ## Estado atual
 
-A interface inicial própria está implementada. Título e conteúdo permanecem temporariamente em memória durante a sessão: ainda não são salvos em arquivos. A ação “Nova nota” limpa os campos; o aplicativo ainda não implementa abertura ou persistência de notas.
+Cada página é um arquivo Markdown `.md` independente, com o título na primeira linha e o texto nas linhas seguintes. O app salva automaticamente após uma breve pausa na digitação; **Salvar agora** ou Ctrl+S força a gravação. Clique em uma página na barra lateral para abri-la. **Nova página** inicia outra página; antes de trocar, o app aguarda a gravação pendente.
+
+Os arquivos ficam na pasta de dados do aplicativo, dentro de `com.local.notedesk/notes/`. No Linux, normalmente em `$XDG_DATA_HOME/com.local.notedesk/notes/` ou `$HOME/.local/share/com.local.notedesk/notes/`; no Windows, em `%APPDATA%\com.local.notedesk\notes\`. O nome do arquivo é um identificador estável, como `abc-123.md`, para que mudar o título não quebre a referência.
+
+Páginas JSON de versões anteriores são lidas da pasta antiga `com.local.bloco-de-notas/notes/`. Ao editar uma delas, o Notedesk grava a versão Markdown na pasta nova e preserva o arquivo antigo como cópia.
