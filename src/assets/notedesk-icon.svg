@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#61735c"/>
-  <path d="M150 356V156L362 356V156" fill="none" stroke="#f8f8f5" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="30 30 452 452">
+  <path d="M120 70h137c82 0 145 62 145 144v228H120Z" fill="none" stroke="#25312a" stroke-width="18" stroke-linejoin="round"/>
+  <text x="260" y="355" fill="#25312a" font-family="Georgia, Liberation Serif, serif" font-size="265" font-weight="700" text-anchor="middle">N</text>
 </svg>

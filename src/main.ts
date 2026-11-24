@@ -13,6 +13,10 @@ const themeMenu = document.querySelector<HTMLElement>("#theme-menu")!;
 const notesList = document.querySelector<HTMLElement>("#notes-list")!;
 const notesPlaceholder = document.querySelector<HTMLElement>("#notes-placeholder")!;
 const draftStatus = document.querySelector<HTMLElement>("#draft-status")!;
+const notesLocationPath = document.querySelector<HTMLElement>("#notes-location-path")!;
+const brandIcon = document.querySelector<HTMLImageElement>("#brand-icon")!;
+const lightIcon = new URL("./assets/notedesk-light.png", import.meta.url).href;
+const darkIcon = new URL("./assets/notedesk-dark.png", import.meta.url).href;
 
 let notes: Note[] = [];
 let currentId: string | null = null;
@@ -82,7 +86,7 @@ async function persistNote(): Promise<boolean> {
     const saved = await invoke<Note>("save_note", { id: currentId, title, body });
     currentId = saved.id;
     dirty = titleInput.value !== title || noteBody.value !== body;
-    draftStatus.textContent = dirty ? "Salvando automaticamente..." : "Salvamento automático";
+    draftStatus.textContent = dirty ? "Salvando automaticamente..." : "salvamento automático";
     try {
       await refreshNotes();
     } catch (error) {
@@ -126,7 +130,7 @@ newNoteButton.addEventListener("click", async () => {
   titleInput.value = "";
   noteBody.value = "";
   dirty = false;
-  draftStatus.textContent = "Salvamento automático";
+  draftStatus.textContent = "salvamento automático";
   updateEditorStatus();
   renderNotes();
   titleInput.focus();
@@ -135,6 +139,7 @@ newNoteButton.addEventListener("click", async () => {
 updateEditorStatus();
 function setTheme(theme: "light" | "dark"): void {
   document.documentElement.dataset.theme = theme;
+  brandIcon.src = theme === "dark" ? darkIcon : lightIcon;
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
     "content", theme === "dark" ? "#1c1e1b" : "#f8f8f5",
   );
@@ -147,6 +152,7 @@ function setTheme(theme: "light" | "dark"): void {
 let storedTheme: string | null = null;
 try { storedTheme = localStorage.getItem("notedesk-theme"); } catch { /* armazenamento indisponível */ }
 setTheme(storedTheme === "dark" ? "dark" : "light");
+document.documentElement.dataset.themeReady = "true";
 settingsButton.addEventListener("click", () => {
   themeMenu.hidden = !themeMenu.hidden;
   settingsButton.setAttribute("aria-expanded", String(!themeMenu.hidden));
@@ -167,6 +173,12 @@ document.addEventListener("keydown", (event) => {
 });
 
 if (isTauri()) {
+  invoke<string>("notes_location").then((path) => {
+    notesLocationPath.textContent = path;
+    notesLocationPath.title = path;
+  }).catch((error) => {
+    notesLocationPath.textContent = `local indisponível: ${String(error)}`;
+  });
   refreshNotes().catch((error) => {
     draftStatus.textContent = `Erro ao carregar páginas: ${String(error)}`;
   });
@@ -176,5 +188,6 @@ if (isTauri()) {
     draftStatus.textContent = `Erro ao preparar salvamento: ${String(error)}`;
   });
 } else {
-  draftStatus.textContent = "Salvamento automático";
+  notesLocationPath.textContent = "disponível no aplicativo desktop";
+  draftStatus.textContent = "salvamento automático";
 }

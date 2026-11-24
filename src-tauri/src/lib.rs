@@ -28,6 +28,11 @@ fn notes_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(dir)
 }
 
+#[tauri::command]
+fn notes_location(app: tauri::AppHandle) -> Result<String, String> {
+    Ok(notes_dir(&app)?.to_string_lossy().into_owned())
+}
+
 fn legacy_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(app
         .path()
@@ -171,7 +176,11 @@ fn save_note(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![list_notes, save_note])
+        .invoke_handler(tauri::generate_handler![
+            list_notes,
+            save_note,
+            notes_location
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

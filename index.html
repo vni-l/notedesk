@@ -13,7 +13,7 @@
       <aside class="sidebar" aria-label="Navegação do NoteDesk">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">
-            <img src="/src/assets/notedesk-icon.svg" alt="" />
+            <img id="brand-icon" alt="" />
           </span>
           <span class="brand-name"><span>Note</span><strong>Desk</strong></span>
         </div>
@@ -46,6 +46,7 @@
               <circle cx="12" cy="12" r="3" />
             </svg>
           </button>
+          <p class="notes-location" aria-label="Local das páginas">Salvas em <span id="notes-location-path">localizando...</span></p>
           <div class="theme-menu" id="theme-menu" hidden>
             <p>Aparência</p>
             <button type="button" data-theme-choice="light">Tema claro</button>
@@ -63,6 +64,7 @@
             </svg>
             <span class="breadcrumb-current" id="breadcrumb-title">Nova página</span>
           </div>
+          <span class="made-with">Feito com o &lt;3</span>
         </header>
 
         <main class="editor-area">
@@ -90,7 +92,7 @@
 
             <footer class="editor-footer">
               <span id="word-count" aria-live="polite">0 palavras · 0 caracteres</span>
-              <span id="draft-status" role="status">Salvamento automático</span>
+              <span id="draft-status" role="status">salvamento automático</span>
             </footer>
           </div>
         </main>
