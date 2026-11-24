@@ -1,4 +1,5 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 type Note = { id: string; title: string; body: string; updatedAt: number };
 
@@ -7,7 +8,8 @@ const noteBody = document.querySelector<HTMLTextAreaElement>("#note-body")!;
 const wordCount = document.querySelector<HTMLElement>("#word-count")!;
 const breadcrumbTitle = document.querySelector<HTMLElement>("#breadcrumb-title")!;
 const newNoteButton = document.querySelector<HTMLButtonElement>("#new-note")!;
-const saveNoteButton = document.querySelector<HTMLButtonElement>("#save-note")!;
+const settingsButton = document.querySelector<HTMLButtonElement>("#settings-button")!;
+const themeMenu = document.querySelector<HTMLElement>("#theme-menu")!;
 const notesList = document.querySelector<HTMLElement>("#notes-list")!;
 const notesPlaceholder = document.querySelector<HTMLElement>("#notes-placeholder")!;
 const draftStatus = document.querySelector<HTMLElement>("#draft-status")!;
@@ -50,10 +52,10 @@ function renderNotes(): void {
 
 function markDirty(): void {
   dirty = true;
-  draftStatus.textContent = isTauri() ? "Salvamento pendente" : "Abra o aplicativo desktop para salvar";
+  draftStatus.textContent = isTauri() ? "Salvando automaticamente..." : "Prévia web sem salvamento";
   updateEditorStatus();
   if (saveTimer !== undefined) window.clearTimeout(saveTimer);
-  if (isTauri()) saveTimer = window.setTimeout(() => { void flushChanges(); }, 700);
+  if (isTauri()) saveTimer = window.setTimeout(() => { void flushChanges(); }, 500);
 }
 
 async function refreshNotes(): Promise<void> {
@@ -73,7 +75,6 @@ async function saveNote(): Promise<boolean> {
 }
 
 async function persistNote(): Promise<boolean> {
-  saveNoteButton.disabled = true;
   const title = titleInput.value;
   const body = noteBody.value;
   draftStatus.textContent = "Salvando...";
@@ -81,7 +82,7 @@ async function persistNote(): Promise<boolean> {
     const saved = await invoke<Note>("save_note", { id: currentId, title, body });
     currentId = saved.id;
     dirty = titleInput.value !== title || noteBody.value !== body;
-    draftStatus.textContent = dirty ? "Salvamento pendente" : "Página salva";
+    draftStatus.textContent = dirty ? "Salvando automaticamente..." : "Salvamento automático";
     try {
       await refreshNotes();
     } catch (error) {
@@ -91,8 +92,6 @@ async function persistNote(): Promise<boolean> {
   } catch (error) {
     draftStatus.textContent = `Erro ao salvar: ${String(error)}`;
     return false;
-  } finally {
-    saveNoteButton.disabled = false;
   }
 }
 
@@ -104,6 +103,7 @@ async function flushChanges(): Promise<boolean> {
     dirty = false;
     return true;
   }
+  if (pendingSave && !(await pendingSave)) return false;
   while (dirty) {
     if (!(await saveNote())) return false;
   }
@@ -112,7 +112,8 @@ async function flushChanges(): Promise<boolean> {
 
 titleInput.addEventListener("input", markDirty);
 noteBody.addEventListener("input", markDirty);
-saveNoteButton.addEventListener("click", () => { void flushChanges(); });
+titleInput.addEventListener("blur", () => { if (dirty) void flushChanges(); });
+noteBody.addEventListener("blur", () => { if (dirty) void flushChanges(); });
 document.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
     event.preventDefault();
@@ -125,18 +126,55 @@ newNoteButton.addEventListener("click", async () => {
   titleInput.value = "";
   noteBody.value = "";
   dirty = false;
-  draftStatus.textContent = "Nova página";
+  draftStatus.textContent = "Salvamento automático";
   updateEditorStatus();
   renderNotes();
   titleInput.focus();
 });
 
 updateEditorStatus();
+function setTheme(theme: "light" | "dark"): void {
+  document.documentElement.dataset.theme = theme;
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute(
+    "content", theme === "dark" ? "#1c1e1b" : "#f8f8f5",
+  );
+  for (const button of themeMenu.querySelectorAll<HTMLButtonElement>("[data-theme-choice]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+  }
+  try { localStorage.setItem("notedesk-theme", theme); } catch { /* armazenamento indisponível */ }
+}
+
+let storedTheme: string | null = null;
+try { storedTheme = localStorage.getItem("notedesk-theme"); } catch { /* armazenamento indisponível */ }
+setTheme(storedTheme === "dark" ? "dark" : "light");
+settingsButton.addEventListener("click", () => {
+  themeMenu.hidden = !themeMenu.hidden;
+  settingsButton.setAttribute("aria-expanded", String(!themeMenu.hidden));
+});
+themeMenu.querySelectorAll<HTMLButtonElement>("[data-theme-choice]").forEach((button) => {
+  button.addEventListener("click", () => {
+    setTheme(button.dataset.themeChoice === "dark" ? "dark" : "light");
+    themeMenu.hidden = true;
+    settingsButton.setAttribute("aria-expanded", "false");
+    settingsButton.focus();
+  });
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    themeMenu.hidden = true;
+    settingsButton.setAttribute("aria-expanded", "false");
+  }
+});
+
 if (isTauri()) {
   refreshNotes().catch((error) => {
     draftStatus.textContent = `Erro ao carregar páginas: ${String(error)}`;
   });
+  getCurrentWindow().onCloseRequested(async (event) => {
+    if (!(await flushChanges())) event.preventDefault();
+  }).catch((error) => {
+    draftStatus.textContent = `Erro ao preparar salvamento: ${String(error)}`;
+  });
 } else {
-  saveNoteButton.disabled = true;
-  draftStatus.textContent = "Abra o aplicativo desktop para salvar";
+  draftStatus.textContent = "Salvamento automático";
 }

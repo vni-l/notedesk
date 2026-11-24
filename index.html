@@ -1,24 +1,21 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f7f4" />
-    <title>Notedesk</title>
+    <title>NoteDesk</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Navegação do Notedesk">
+      <aside class="sidebar" aria-label="Navegação do NoteDesk">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M5 3.5h10l4 4v13H5a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Z" />
-              <path d="M15 3.5v4h4M7.5 16V10l6 6v-6" />
-            </svg>
+            <img src="/src/assets/notedesk-icon.svg" alt="" />
           </span>
-          <span class="brand-name">Notedesk</span>
+          <span class="brand-name"><span>Note</span><strong>Desk</strong></span>
         </div>
 
         <button class="new-note-button" id="new-note" type="button">
@@ -43,10 +40,16 @@
         </div>
 
         <div class="sidebar-footer">
-          <span class="session-dot" aria-hidden="true"></span>
-          <div>
-            <p class="footer-title">Páginas locais</p>
-            <p class="footer-copy">Salvas neste computador</p>
+          <button class="settings-button" id="settings-button" type="button" aria-label="Configurações de aparência" aria-expanded="false" aria-controls="theme-menu">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10.4 3.5h3.2l.6 2.1 1.7.7 1.9-1 2.3 2.3-1 1.9.7 1.7 2.1.6v3.2l-2.1.6-.7 1.7 1 1.9-2.3 2.3-1.9-1-1.7.7-.6 2.1h-3.2l-.6-2.1-1.7-.7-1.9 1-2.3-2.3 1-1.9-.7-1.7-2.1-.6v-3.2l2.1-.6.7-1.7-1-1.9 2.3-2.3 1.9 1 1.7-.7.6-2.1Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+          <div class="theme-menu" id="theme-menu" hidden>
+            <p>Aparência</p>
+            <button type="button" data-theme-choice="light">Tema claro</button>
+            <button type="button" data-theme-choice="dark">Tema escuro</button>
           </div>
         </div>
       </aside>
@@ -60,7 +63,6 @@
             </svg>
             <span class="breadcrumb-current" id="breadcrumb-title">Nova página</span>
           </div>
-          <button class="save-note-button" id="save-note" type="button">Salvar agora</button>
         </header>
 
         <main class="editor-area">
@@ -88,7 +90,7 @@
 
             <footer class="editor-footer">
               <span id="word-count" aria-live="polite">0 palavras · 0 caracteres</span>
-              <span id="draft-status" role="status">Nova página</span>
+              <span id="draft-status" role="status">Salvamento automático</span>
             </footer>
           </div>
         </main>

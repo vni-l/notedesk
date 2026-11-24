@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
+    io::Write,
     path::Path,
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
@@ -104,6 +105,27 @@ fn valid_id(id: &str) -> bool {
     !id.is_empty() && id.chars().all(|c| c.is_ascii_hexdigit() || c == '-')
 }
 
+fn write_page(path: &Path, content: &str) -> Result<(), String> {
+    let suffix = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_nanos();
+    let temp = path.with_extension(format!("{}-{suffix}.tmp", std::process::id()));
+    let result = (|| -> std::io::Result<()> {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)?;
+        file.write_all(content.as_bytes())?;
+        file.sync_all()?;
+        fs::rename(&temp, path)
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result.map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn list_notes(app: tauri::AppHandle) -> Result<Vec<Note>, String> {
     let mut by_id = HashMap::new();
@@ -142,7 +164,7 @@ fn save_note(
         updated_at: now.as_millis() as u64,
     };
     let path = notes_dir(&app)?.join(format!("{id}.md"));
-    fs::write(path, markdown(&note)).map_err(|e| e.to_string())?;
+    write_page(&path, &markdown(&note))?;
     Ok(note)
 }
 
@@ -169,5 +191,24 @@ mod tests {
         let loaded = parse_markdown(note.id.clone(), &markdown(&note), note.updated_at);
         assert_eq!(loaded.title, note.title);
         assert_eq!(loaded.body, note.body);
+    }
+
+    #[test]
+    fn page_write_replaces_complete_file() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join(format!(
+                "page-write-test-{}",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+        fs::create_dir_all(&dir).unwrap();
+        let page = dir.join("example.md");
+        write_page(&page, "# Primeira\n\nconteúdo antigo").unwrap();
+        write_page(&page, "# Segunda\n\nnovo").unwrap();
+        assert_eq!(fs::read_to_string(&page).unwrap(), "# Segunda\n\nnovo");
+        fs::remove_dir_all(dir).unwrap();
     }
 }
